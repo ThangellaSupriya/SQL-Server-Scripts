@@ -1,0 +1,363 @@
+use test;
+---department table and data
+create table department(
+ did varchar(20),
+ name varchar(20) not null,
+ constraint pk_dept primary key(did))
+
+insert into department values('D1','Management')
+insert into department values('D2','IT')
+insert into department values('D3','Sales')
+insert into department values('D4','HR')
+
+alter table department drop constraint pk_dept
+--- to add primary key constraint to column did it should not null
+alter table department alter column did char(2) NOT NULL 
+
+alter table department add constraint pk_dept primary key(did)
+
+----employee table and data
+drop table employee
+create table employee(
+eid int,
+name varchar(20) unique,
+join_date date not null,
+dep char(2) check (dep in ('D1','D2','D3','D4',' ')),
+salary int,
+manager int,
+constraint PK_id primary key(eid),
+constraint FK_DID foreign key(dep) references department(did))
+INSERT INTO employee (eid, name, join_date, dep, salary, manager)
+VALUES (101, 'David', '2009-01-15', 'D1', 50000,null ),
+       (102, 'Sam', '2008-02-01', 'D1', 40000, 101),
+       (103, 'Alica', '2007-03-22', 'D2',30000, 102),
+	   (104, 'Alex', '2021-06-30', 'D2', 20000, 102),
+	   (105, 'Roby', '2022-03-23', 'D2', 20000, 102),
+	   (106, 'Jack', '2024-09-25', 'D3', 8000, 101),
+	   (107, 'Tom', '2024-10-24', 'D2', 5000, 116),
+	   (108, 'Lily', '2006-12-13', 'D4', 1000, 106);
+
+select * from employee
+------ project table and data
+create table project(
+person varchar(20),
+proj_name varchar(20),
+job_description varchar(100))
+insert into project values('David','Ecommerce','generate and manage sales via online channels'),
+('Sam', 'Inventory', 'manage location and pricing of inventory'),
+('Alicia', 'Inventory','manage products that are in storage or transit'),
+('Ryan', 'Ecommerce', 'advertising and marketing efforts of a company'),
+('Ellen','Inventory', 'manage overall operations and help employees');
+--------sales table and data
+----------------------------no boolean data type in sql server------------------------------------------
+CREATE TABLE sale (
+ category varchar(20),
+ brand varchar(20),
+ name varchar(50) NOT NULL,
+ quantity int CHECK (quantity >= 0),
+ price float NOT NULL,
+ stock Bit,
+ CONSTRAINT PK_name PRIMARY KEY(name)
+);
+insert into sale values('Phone', 'Apple', 'iPhone 13', 4, 1300.0,0),
+('Phone' ,'Apple', 'iPhone 12', 6, 1100.0 ,1),
+('Phone ','Samsung',' Galaxy Note 20', 5, 1200.0 ,1),
+('Phone','Samsung', 'Galaxy S21 ',4, 1100.0 ,0),
+('Laptop', 'Apple', 'MacBook Pro 13', 3, 2000.0 ,1),
+('Laptop', 'Apple', 'MacBook Air ',2, 1200.0 ,1),
+('Laptop',' Dell', 'XPS 13 ','1' ,2000.0 ,0),
+('Laptop',' Dell', 'XPS 15 ','2',2300.0 ,1),
+('Tablet',' Apple', 'iPad 7th gen', 3, 560.0, 0),
+('Tablet',' Samsung',' Galaxy Tab A7', 2, 220.0,1)
+
+--------------------------------------------------Questions and answers----------------------------
+-----1. Duplicate employee Table with Data
+select * into employee_backup from employee
+
+------2. Duplicate employee Table without Data
+select * into employee_backup_1 from employee where 1=0
+/*here 1=0 or 1=2 or 1=6 any number is same result table without data and 
+when you execute it you will get 0 rows effected */
+
+------3.Update manager of Tom as 106
+update employee set manager=106 where name='Tom'
+
+------4. Update department and salary of Lily as D3, 5000
+update employee set dep='D3' , salary=5000 where name='Lily'
+
+-------5.Delete Lily’s record from backup
+delete from employee_backup where name='Lily'
+
+-------6.Delete Alex and Roby's record from backup
+delete from employee_backup where name='Roby' or name='Alex'
+
+-------7. Delete all records OR Truncate the whole backup data
+truncate table employee_backup
+
+-------8. Rename sale table to ‘sales’
+/* To rename a table in SQL Server, you can use the sp_rename stored procedure.*/
+EXEC sp_rename 'sale', 'sales'
+
+--------9. Rename dep column to ‘dept’
+/* To rename a column in SQL Server, you can use the sp_rename stored procedure.
+Here’s how you can rename the dep column to dept in the department table:*/
+----error due to dependenices(foreign key constraint)
+
+EXEC sp_depends 'employee'; -- to find dependencies
+alter table employee drop constraint fk_did
+alter table employee drop constraint  CK__employee__dep__5812160E --(from above query)
+
+EXEC sp_rename 'employee.dep','dept','Column'
+
+---------10.Add new constraint GEN to Gender column
+alter table employee add "gender" varchar(20)
+alter table employee add constraint gen_ck check (gender in ('M','F'))
+alter table employee drop constraint gen_ck
+---------11.Grant single privilege, Grant multiple privilege
+grant select on user to "test"
+grant insert, update on users to "test"
+--------------TCL COMMANDS
+
+BEGIN
+DELETE FROM employee
+WHERE name = 'Lily'
+COMMIT
+ROLLBACK
+
+begin transaction
+SAVE transaction pointA
+delete from employee
+ROLLBACK transaction pointA
+commit
+
+--------11. Fetch products in stock with price range 1000 to 1500
+select * from sales where stock=1 and 
+price between 1000 and 1500 order by price 
+
+-------12.Fetch employees not in department D2 and name either starts with ‘j’ or not end with ‘y’
+select * from employee where dept not in ('d2') and 
+(name like 'j%' or name not like '%y' )
+
+---------13. Fetch employee data who join on March
+select * from employee where month(join_date)='03'
+
+---------------Fetch todays date
+select format(getdate(),'MMMM dd,yyyy') as todays_date
+------------14.Categorize employees based on their salary <10000 low, 10000<sal<30000 mid, >30000 high
+select * , 
+case
+    when salary <10000 then 'Low'
+	when salary between 10000 and 30000 then 'Mid'
+	when salary >30000 then 'High'
+end as range
+from employee
+
+------------------15.Fetch employees from Management & involve on projects
+select name, proj_name  from employee inner join project on employee.name=project.person
+where dept='d1'
+
+--------------16.Fetch only employees who work on projects
+select name from employee
+intersect 
+select person from project
+
+-----------17.Fetch person who is not an employee but work on project 
+select person from project
+except
+select name from employee 
+
+------------18.Fetch all IT employees name wrt their department
+select e.name,d.name  from employee e inner join department d on e.dept=d.did
+where d.name='IT'
+
+--------------19.Fetch all project name with respected employee name
+select proj_name,name from project p left join employee e on p.person=e.name
+
+--------------20.Fetch all employee name wrt projects they are working
+select name,proj_name from project p right join employee e on p.person=e.name
+
+--------------21.Fetch all employee with their correlated projects
+select name,proj_name from project p full join employee e on p.person=e.name
+
+-------------22.Give 500 bonus for all employees
+create table advance (bonus int)
+insert into advance values(500)
+select *,(salary+bonus)as new_salary from employee cross join advance
+
+-------------23.Fetch all employee name with their manager
+select m.name as employee,(select e.name from employee e where m.manager=e.eid) as manager
+from employee m
+------or
+select e.name as employee,m.name as manager from employee e join employee m
+on m.eid=e.manager
+
+-----------24.Create a mail address for all employees using their name and department with lowercase & @tcs.in domain
+select distinct e.name,concat((lower(e.name)+'.'),lower(substring(d.name,0,6)),'@tcs.in domain') as mail_address,d.name
+from employee e join department d on e.dept=d.did
+
+-----------25.Fetch total employee, min, max, average & total salary of each department which have less than 3 employees
+select d.name,count(e.name)as total_emp, min(salary)as min,max(salary) as max,sum(salary) as total_sal 
+from employee e join department d on e.dept=d.did 
+group by d.name
+having count(e.name)<3
+
+-----------26.Fetch occurrence of words in job description which is > 1
+with word_count as (
+   select value as word, count(*) as counter from project
+   cross apply string_split(job_description,' ')
+   group by value
+   )
+select word,counter from word_count
+where counter>1
+order by counter DESC
+
+-----------27.Fetch name and salary of employee who earn more than average of total salary
+select name,salary from employee 
+where salary> (select avg(salary) from employee)
+
+-----------28.Find department which do not have any employees
+select name from employee
+where dept not in ( select distinct did from department where did is not null)
+
+------------29.Employees who earn highest salary in each department
+with ranked_salaries as(
+  select name,dept,salary,
+  row_number() over (partition by dept order by salary desc) as rank
+  from employee
+  )
+  select name,dept,salary from ranked_salaries
+  where rank=1
+
+-------------31.Find the employees in each department who earn more than the average salary in that department
+select e1.name,e1.dept,e1.salary from employee e1
+where e1.salary >(select avg(e2.salary) from employee e2 where e2.dept=e1.dept)
+
+---------------32.Find brand which sales are better than the average of total sales across all brands
+with total_sales as (
+  select brand,sum(price) as total from sales group by brand),
+  average_sales as (select avg(total) as average from total_sales)
+  select ts.brand, ts.total,avs.average from total_sales ts,average_sales avs
+  where ts.total> avs.average
+ -----or 
+SELECT *
+FROM (
+ SELECT brand, SUM(price) AS Total_Sales
+ FROM sales
+ GROUP BY brand) sales
+ JOIN (
+ SELECT AVG(Total_Sales) AS SALES
+ FROM (
+ SELECT brand, SUM(price) AS Total_Sales
+ FROM sales
+ GROUP BY brand) X
+ ) AVG_SALES
+ ON SALES.Total_Sales > AVG_SALES.Sales;
+
+-----------34.Give roll number to all employees with and without dept
+select eid,name,dept,
+row_number() over(order by eid) as roll, row_number() over(partition by dept order by dept) as roll_dept
+from employee
+
+-----------35.Fetch 1st employees from each dept to join the company
+
+with cte as(
+select *, 
+row_number() over(partition by dept order by dept) as roll_dp from employee)
+select *,roll_dp from cte 
+where roll_dp=1
+
+---------------36.Rank all employees in each department based on their salary with and without duplicate rank skipping
+select name,dept,salary,
+rank() over(order by salary desc) as salary_rank,
+dense_rank() over(order by salary desc) as salary_dense_rank
+from employee
+
+---------------37.Fetch a query to display if the salary of an employee is higher, lower or equal to previous and next employee
+with comp as (
+  select eid,name,salary,
+  lag(salary) over(order by eid) as P_sal,
+  lead(salary) over(order by eid) as N_sal
+  from employee
+  )
+  select *,
+  case
+     when salary<P_sal then 'low'
+	 when salary>P_sal then 'high'
+	 when salary=P_sal then 'equal'
+  end previous,
+  case
+     when salary<N_sal then 'low'
+	 when salary>N_sal then 'high'
+	 when salary=N_sal then 'equal'
+  end next
+  from comp
+
+---------------38.Query to display the most & least expensive product under each category (corresponding to each record)
+--------- using rank
+with cte as (
+select category,name,price,
+rank() over(partition by category order by price desc) as rank_desc,
+rank() over(partition by category order by price asc) as rank_asc 
+from sales)
+select category,name,price,
+case when rank_desc=1 then 'Most Expensive'
+  when rank_asc=1 then 'least Expensive'
+  end as rank_name
+from cte
+WHERE 
+    rank_desc = 1 OR rank_asc = 1
+ORDER BY 
+    category, name;
+
+
+---------------39.Fetch least expensive product of each category
+with cte as (
+select category,name,price,
+rank() over(partition by category order by price asc) as rank_asc
+from sales)
+select category,name,price from cte
+where rank_asc=1 
+
+---------------40.Fetch the 2nd most expensive product of each category
+with cte as (
+select category,name,price,
+rank() over(partition by category order by price desc) as rank_desc
+from sales)
+select category,name,price from cte
+where rank_desc=2
+----------------41.Fetch all products which are constituting the first 30% of the data in products table based on price
+/*  to retrieve the products that fall within the lowest 30% of prices in the products table. Essentially, you need to 
+identify the products that are among the least expensive 30% of all products.
+Here’s a step-by-step breakdown of what this means:
+    Order the Products by Price: Arrange all the products in ascending order based on their price.
+    Calculate the 30% Threshold: Determine the number of products that make up the first 30% of the total number of products.
+    Select the Products: Retrieve the products that fall within this 30% range.
+For example, if you have 100 products in your table, the first 30% would be the 30 products with the lowest prices.*/
+with ranked_products as (
+  select category,brand,name,price,
+  percent_rank() over(order by price asc) as percent_rank from sales)
+  select category,brand,name,price,percent_rank
+  from ranked_products
+  where percent_rank<=0.3
+
+----------------42.Write a Query to identify how much percentage more expensive is "iPhone 13" when compared to all products
+with ranked_cte as (
+  select *,
+  percent_rank() over(order by price asc) as percent_rank
+  from sales)
+  select *,round(percent_rank*100,2) as percentage
+  from ranked_cte
+  where name='iphone 13'
+
+----------------43.Segregate all phones into expensive, midrange & cheap
+/*  The NTILE(3) OVER (ORDER BY price DESC) function divides the phones into three buckets based on their price,
+with the most expensive phones in bucket 1 and the cheapest in bucket 3.*/
+select category,brand,name,price,
+ case 
+    when categorized.bucket=1 then 'Expensive'
+	when categorized.bucket=2 then 'Mid Range'
+	when categorized.bucket=3 then 'Least'
+end as price_range
+from (select category,brand,name,price, 
+ntile(3) over(order by price desc) as bucket from sales where category='phone')as categorized
+where category='phone'
