@@ -1,0 +1,98 @@
+create database maven
+use maven
+CREATE SCHEMA mavenfuzzyfactory;
+--
+-- Creating an empty shell for the table 'website_sessions'. We will populate it later. 
+--
+/* if want to execute entire script at once then u will e=write go before every query and want to commit after inserting data then use begin transaction at
+beginning od data insert query and commit at end of insert statement */
+Go       
+CREATE TABLE mavenfuzzyfactory.website_sessions (
+  website_session_id BIGINT NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  user_id BIGINT  NOT NULL,
+  is_repeat_session SMALLINT NOT NULL, 
+  utm_source VARCHAR(12), 
+  utm_campaign VARCHAR(20),
+  utm_content VARCHAR(15), 
+  device_type VARCHAR(15), 
+  http_referer VARCHAR(30),
+  PRIMARY KEY (website_session_id),
+  Index website_sessions_user_id (user_id)
+)
+
+
+--
+-- Creating an empty shell for the table 'website_pageviews'. We will populate it later. 
+--
+Go
+CREATE TABLE mavenfuzzyfactory.website_pageviews (
+  website_pageview_id BIGINT NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  website_session_id BIGINT NOT NULL,
+  pageview_url VARCHAR(50) NOT NULL,
+  PRIMARY KEY (website_pageview_id),
+  Index website_pageviews_website_session_id (website_session_id)
+);
+
+Go
+--
+-- Creating an empty shell for the table 'products'. We will populate it later. 
+--
+
+CREATE TABLE mavenfuzzyfactory.products (
+  product_id BIGINT NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  product_name VARCHAR(50) NOT NULL,
+  PRIMARY KEY (product_id)
+);
+
+--
+-- Creating an empty shell for the table 'orders'. We will populate it later. 
+--
+Go
+CREATE TABLE mavenfuzzyfactory.orders (
+  order_id BIGINT NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  website_session_id BIGINT  NOT NULL,
+  user_id BIGINT  NOT NULL,
+  primary_product_id SMALLINT  NOT NULL,
+  items_purchased SMALLINT  NOT NULL,
+  price_usd DECIMAL(6,2) NOT NULL,
+  cogs_usd DECIMAL(6,2) NOT NULL,
+  PRIMARY KEY (order_id),
+  Index orders_website_session_id (website_session_id)
+);
+
+
+--
+-- Creating an empty shell for the table 'order_items'. We will populate it later. 
+--
+Go
+CREATE TABLE mavenfuzzyfactory.order_items (
+  order_item_id BIGINT  NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  order_id BIGINT  NOT NULL,
+  product_id SMALLINT  NOT NULL,
+  is_primary_item SMALLINT  NOT NULL,
+  price_usd DECIMAL(6,2) NOT NULL,
+  cogs_usd DECIMAL(6,2) NOT NULL,
+  PRIMARY KEY (order_item_id),
+  index order_items_order_id (order_id)
+);
+
+
+--
+-- Creating an empty shell for the table 'order_item_refunds'. We will populate it later. 
+--
+Go
+CREATE TABLE mavenfuzzyfactory.order_item_refunds (
+  order_item_refund_id BIGINT  NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  order_item_id BIGINT  NOT NULL,
+  order_id BIGINT  NOT NULL,
+  refund_amount_usd DECIMAL(6,2) NOT NULL,
+  PRIMARY KEY (order_item_refund_id),
+  index order_items_order_id (order_id),
+  index order_items_order_item_id (order_item_id)
+);
