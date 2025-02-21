@@ -1,0 +1,21 @@
+---database: maven
+----schema: mavenfuzzyfactory
+Go
+--
+-- Creating an empty shell for the table 'products'. We will populate it later. 
+--
+
+CREATE TABLE mavenfuzzyfactory.products (
+  product_id BIGINT NOT NULL Identity(1,1),
+  created_at DATETIME NOT NULL,
+  product_name VARCHAR(50) NOT NULL,
+  PRIMARY KEY (product_id)
+);
+SET IDENTITY_INSERT mavenfuzzyfactory.products ON;
+Go
+INSERT INTO mavenfuzzyfactory.products(product_id,created_at,product_name) VALUES 
+(1,'2012-03-19 08:00:00','The Original Mr. Fuzzy'),
+(2,'2013-01-06 13:00:00','The Forever Love Bear'),
+(3,'2013-12-12 09:00:00','The Birthday Sugar Panda'),
+(4,'2014-02-05 10:00:00','The Hudson River Mini bear');
+SET IDENTITY_INSERT mavenfuzzyfactory.products OFF;
