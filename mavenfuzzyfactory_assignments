@@ -1,0 +1,23 @@
+--------------------------------------Assignments--------------------------------------------------------
+
+use maven
+/*1.  Cindy Sharp, the CEO of your company, has sent you this message about a month into the life of your company.
+She's trying to figure out where all of the website sessions are coming from. She'd like to see you break down
+session volumes by UTM, Source UTM campaign and referring domain. */
+select distinct utm_source,utm_campaign,http_referer,count(website_session_id) as sessions 
+from mavenfuzzyfactory.website_sessions
+where created_at<'2012-03-31'
+group by utm_source,utm_campaign,http_referer
+order by count(website_session_id) desc;
+
+/*2.Tom wants you to dig in deeply to that campaign and try to understand the conversion rates from sessions to order.
+In other words, figuring out what percentage of sessions convert to a sale for the company.If the conversion rate is 
+4% or higher, then he's happy with the bids. And if not, he thinks you'll need to bid down */
+select count(distinct o.order_id) as orders,
+count(distinct ws.website_session_id) as most_driven_ads,
+count(distinct o.order_id)*100/count(distinct ws.website_session_id) as session_order_convrate
+from mavenfuzzyfactory.website_sessions ws
+left join mavenfuzzyfactory.orders o on ws.website_session_id=o.website_session_id
+where ws.created_at<='2012-03-31' and utm_source='gsearch' and utm_campaign='nonbrand'
+group by utm_source,utm_campaign
+order by count(distinct ws.website_session_id) desc
